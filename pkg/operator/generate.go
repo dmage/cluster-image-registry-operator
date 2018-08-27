@@ -10,6 +10,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/intstr"
 
 	appsapi "github.com/openshift/api/apps/v1"
@@ -17,6 +18,7 @@ import (
 	projectapi "github.com/openshift/api/project/v1"
 
 	"github.com/openshift/cluster-image-registry-operator/pkg/apis/dockerregistry/v1alpha1"
+	"github.com/openshift/cluster-image-registry-operator/pkg/operator/strategy"
 )
 
 const (
@@ -25,6 +27,11 @@ const (
 
 	supplementalGroupsAnnotation = "openshift.io/sa.scc.supplemental-groups"
 )
+
+type Template struct {
+	Object   runtime.Object
+	Strategy strategy.Strategy
+}
 
 // addOwnerRefToObject appends the desired OwnerReference to the object
 func addOwnerRefToObject(obj metav1.Object, ownerRef metav1.OwnerReference) {
@@ -106,7 +113,7 @@ func generateSecurityContext(cr *v1alpha1.OpenShiftDockerRegistry, namespace str
 	}, nil
 }
 
-func GenerateServiceAccount(cr *v1alpha1.OpenShiftDockerRegistry, p *Parameters) *corev1.ServiceAccount {
+func GenerateServiceAccount(cr *v1alpha1.OpenShiftDockerRegistry, p *Parameters) Template {
 	sa := &corev1.ServiceAccount{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "v1",
@@ -118,10 +125,13 @@ func GenerateServiceAccount(cr *v1alpha1.OpenShiftDockerRegistry, p *Parameters)
 		},
 	}
 	addOwnerRefToObject(sa, asOwner(cr))
-	return sa
+	return Template{
+		Object:   sa,
+		Strategy: strategy.Override{},
+	}
 }
 
-func GenerateClusterRole(cr *v1alpha1.OpenShiftDockerRegistry) *authapi.ClusterRole {
+func GenerateClusterRole(cr *v1alpha1.OpenShiftDockerRegistry) Template {
 	role := &authapi.ClusterRole{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "rbac.authorization.k8s.io/v1",
@@ -179,10 +189,13 @@ func GenerateClusterRole(cr *v1alpha1.OpenShiftDockerRegistry) *authapi.ClusterR
 		},
 	}
 	addOwnerRefToObject(role, asOwner(cr))
-	return role
+	return Template{
+		Object:   role,
+		Strategy: strategy.Override{},
+	}
 }
 
-func GenerateClusterRoleBinding(cr *v1alpha1.OpenShiftDockerRegistry, p *Parameters) *authapi.ClusterRoleBinding {
+func GenerateClusterRoleBinding(cr *v1alpha1.OpenShiftDockerRegistry, p *Parameters) Template {
 	crb := &authapi.ClusterRoleBinding{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "rbac.authorization.k8s.io/v1",
@@ -204,7 +217,10 @@ func GenerateClusterRoleBinding(cr *v1alpha1.OpenShiftDockerRegistry, p *Paramet
 		},
 	}
 	addOwnerRefToObject(crb, asOwner(cr))
-	return crb
+	return Template{
+		Object:   crb,
+		Strategy: strategy.Override{},
+	}
 }
 
 func GenerateService(cr *v1alpha1.OpenShiftDockerRegistry, p *Parameters) *corev1.Service {

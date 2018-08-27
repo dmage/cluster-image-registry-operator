@@ -147,7 +147,7 @@ func applyResource(o *v1alpha1.OpenShiftDockerRegistry, p *Parameters) (bool, er
 
 	modified := false
 
-	err = ApplyServiceAccount(GenerateServiceAccount(o, p), &modified)
+	err = ApplyTemplate(GenerateServiceAccount(o, p), &modified)
 	if err != nil {
 		msg := fmt.Sprintf("unable to apply service account: %s", err)
 
@@ -157,7 +157,7 @@ func applyResource(o *v1alpha1.OpenShiftDockerRegistry, p *Parameters) (bool, er
 		return true, nil
 	}
 
-	err = ApplyClusterRole(GenerateClusterRole(o), &modified)
+	err = ApplyTemplate(GenerateClusterRole(o), &modified)
 	if err != nil {
 		msg := fmt.Sprintf("unable to apply cluster role: %s", err)
 
@@ -167,7 +167,7 @@ func applyResource(o *v1alpha1.OpenShiftDockerRegistry, p *Parameters) (bool, er
 		return true, nil
 	}
 
-	err = ApplyClusterRoleBinding(GenerateClusterRoleBinding(o, p), &modified)
+	err = ApplyTemplate(GenerateClusterRoleBinding(o, p), &modified)
 	if err != nil {
 		msg := fmt.Sprintf("unable to apply cluster role binding: %s", err)
 
